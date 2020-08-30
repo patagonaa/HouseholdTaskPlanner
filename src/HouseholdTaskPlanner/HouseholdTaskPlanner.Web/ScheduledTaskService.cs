@@ -3,7 +3,7 @@ using HouseholdTaskPlanner.Common.Db.Models;
 using System;
 using System.Threading.Tasks;
 
-namespace HouseholeTaskPlanner.Web
+namespace HouseholdTaskPlanner.Web
 {
     public class ScheduledTaskService
     {

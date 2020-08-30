@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HouseholeTaskPlanner.Web
+namespace HouseholdTaskPlanner.Web
 {
     public class RecurringTaskScheduleInitializer : IHostedService
     {

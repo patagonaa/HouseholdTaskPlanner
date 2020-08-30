@@ -4,7 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
 
-namespace HouseholeTaskPlanner.Web
+namespace HouseholdTaskPlanner.Web
 {
     public class Program
     {
