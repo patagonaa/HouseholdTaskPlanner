@@ -27,7 +27,7 @@
                         <td><span data-bind="text: name"></span></td>
                         <td><span data-bind="text: description"></span></td>
                         <td><select data-bind="options: $root.users, optionsText: 'name', optionsValue: 'id', value: assignedUser"></select></td>
-                        <td><button data-bind="click: function(){ $root.setDone(id); }">Set Done</button><span data-bind="if: loading">⌛</span></td>
+                        <td><button data-bind="click: setDone">Set Done</button><span data-bind="if: loading">⌛</span></td>
                     </tr>
                     <!-- /ko -->
                 </tbody>
