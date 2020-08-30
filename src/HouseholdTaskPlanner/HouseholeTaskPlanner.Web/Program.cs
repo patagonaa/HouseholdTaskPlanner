@@ -19,7 +19,7 @@ namespace HouseholeTaskPlanner.Web
                 .ConfigureAppConfiguration(config =>
                     config
                     .AddEnvironmentVariables()
-                    .AddJsonFile("./config/appSettings.json", optional: true))
+                    .AddJsonFile("./config/appsettings.json", optional: true))
                 .ConfigureLogging(ConfigureLogging)
                 .ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>());
         }

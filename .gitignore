@@ -2,6 +2,6 @@
 *.user
 bin/
 obj/
-appSettings.json
 wwwroot
 node_modules/
+launchSettings.json
