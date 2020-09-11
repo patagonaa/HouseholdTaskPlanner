@@ -37,5 +37,15 @@ namespace HouseholdTaskPlanner.Web.Controllers
         {
             await _scheduledTaskRepository.SetAssignedUser(id, userId <= 0 ? null : (int?)userId);
         }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> Delete([FromBody] int id)
+        {
+            if (!await _scheduledTaskRepository.Delete(id))
+            {
+                return NotFound();
+            }
+            return Ok();
+        }
     }
 }

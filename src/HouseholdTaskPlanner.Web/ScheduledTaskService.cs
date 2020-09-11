@@ -16,18 +16,29 @@ namespace HouseholdTaskPlanner.Web
             _recurringTaskRepository = recurringTaskRepository;
         }
 
+        public async Task RescheduleRecurringTask(RecurringTask recurringTask)
+        {
+            await _scheduledTaskRepository.DeleteForRecurringTask(recurringTask.Id);
+            await ScheduleRecurringTask(recurringTask);
+        }
+
         public async Task InitializeRecurringTasks()
         {
             var recurringTasks = await _recurringTaskRepository.GetUnscheduled();
             foreach (var recurringTask in recurringTasks)
             {
-                await _scheduledTaskRepository.Insert(new ScheduledTask
-                {
-                    Date = DateTime.UtcNow.Date + TimeSpan.FromDays(recurringTask.IntervalDays), // TODO: this should use local time
-                    RecurringTaskId = recurringTask.Id,
-                    State = ScheduledTaskState.Todo
-                });
+                await ScheduleRecurringTask(recurringTask);
             }
+        }
+
+        private async Task ScheduleRecurringTask(RecurringTask recurringTask)
+        {
+            await _scheduledTaskRepository.Insert(new ScheduledTask
+            {
+                Date = DateTime.UtcNow.Date + TimeSpan.FromDays(recurringTask.IntervalDays), // TODO: this should use local time
+                RecurringTaskId = recurringTask.Id,
+                State = ScheduledTaskState.Todo
+            });
         }
 
         public async Task HandleTaskDone(int id)

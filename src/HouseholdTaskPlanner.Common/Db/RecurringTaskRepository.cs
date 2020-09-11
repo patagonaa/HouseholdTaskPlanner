@@ -27,7 +27,7 @@ namespace HouseholdTaskPlanner.Common.Db
         {
             using (var connection = GetConnection())
             {
-                return await connection.QueryFirstAsync<RecurringTask>("SELECT * FROM [dbo].[RecurringTask] WHERE Id = @id", new { id = id });
+                return await connection.QueryFirstAsync<RecurringTask>("SELECT * FROM [dbo].[RecurringTask] WHERE Id = @Id", new { Id = id });
             }
         }
 
@@ -50,7 +50,7 @@ namespace HouseholdTaskPlanner.Common.Db
             {
                 var sqlStr = @"UPDATE [dbo].[RecurringTask] SET [Name] = @Name, [Description] = @Description, [IntervalDays] = @IntervalDays WHERE Id = @id";
 
-                return await connection.ExecuteAsync(sqlStr, task) > 0;
+                return await connection.ExecuteAsync(sqlStr, new { id = task.Id }) > 0;
             }
         }
 
@@ -66,6 +66,27 @@ WHERE
     NOT EXISTS (SELECT ScheduledTask.Id FROM ScheduledTask WHERE ScheduledTask.RecurringTaskId = RecurringTask.Id AND ScheduledTask.State = @State)
 ", new { State = (int)ScheduledTaskState.Todo });
                 return results.ToList();
+            }
+        }
+
+        public async Task<bool> Delete(int id)
+        {
+            using (var connection = GetConnection())
+            {
+                var nameUpdateSql = @"
+UPDATE
+    ScheduledTask
+SET
+    ScheduledTask.Name = RecurringTask.Name
+FROM ScheduledTask
+INNER JOIN RecurringTask ON RecurringTask.Id = ScheduledTask.RecurringTaskId
+WHERE RecurringTask.Id = @Id";
+
+                await connection.ExecuteAsync(nameUpdateSql, new { Id = id });
+
+                var deleteSql = @"DELETE FROM RecurringTask WHERE Id = @Id";
+
+                return await connection.ExecuteAsync(deleteSql, new { Id = id }) > 0;
             }
         }
     }

@@ -25,8 +25,8 @@ namespace HouseholdTaskPlanner.Web.Controllers
             return await _recurringTaskRepository.GetAll();
         }
 
-        [HttpPut]
-        public async Task Put([FromBody] RecurringTaskAddModel addModel)
+        [HttpPost]
+        public async Task Post([FromBody] RecurringTaskAddModel addModel)
         {
             var newTask = new RecurringTask
             {
@@ -37,6 +37,27 @@ namespace HouseholdTaskPlanner.Web.Controllers
 
             await _recurringTaskRepository.Insert(newTask);
             await _scheduledTaskService.InitializeRecurringTasks();
+        }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult> Put([FromBody] RecurringTask updateModel)
+        {
+            if (!await _recurringTaskRepository.Update(updateModel))
+            {
+                return NotFound();
+            }
+            await _scheduledTaskService.RescheduleRecurringTask(updateModel);
+            return Ok();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> Delete([FromBody] int id)
+        {
+            if (!await _recurringTaskRepository.Delete(id))
+            {
+                return NotFound();
+            }
+            return Ok();
         }
     }
 }

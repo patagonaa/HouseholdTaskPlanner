@@ -1,7 +1,6 @@
 ﻿using Dapper;
 using HouseholdTaskPlanner.Common.Db.Models;
 using Microsoft.Extensions.Options;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,11 +13,29 @@ namespace HouseholdTaskPlanner.Common.Db
         {
         }
 
+        public async Task<bool> Delete(int id)
+        {
+            using (var connection = GetConnection())
+            {
+                var query = @"DELETE FROM ScheduledTask WHERE Id = @Id";
+                return await connection.ExecuteAsync(query, new { Id = id }) > 0;
+            }
+        }
+
+        public async Task DeleteForRecurringTask(int recurringTaskId)
+        {
+            using (var connection = GetConnection())
+            {
+                var query = @"DELETE FROM ScheduledTask WHERE RecurringTaskId = @RecurringTaskId";
+                await connection.ExecuteAsync(query, new { RecurringTaskId = recurringTaskId });
+            }
+        }
+
         public async Task<ScheduledTask> Get(int id)
         {
             using (var connection = GetConnection())
             {
-                var query = @"SELECT * FROM ScheduledTask";
+                var query = @"SELECT * FROM ScheduledTask WHERE Id = @Id";
                 return await connection.QueryFirstAsync<ScheduledTask>(query, new { Id = id });
             }
         }

@@ -11,5 +11,6 @@ namespace HouseholdTaskPlanner.Common.Db
         Task<IList<RecurringTask>> GetAll();
         Task<RecurringTask> Get(int id);
         Task<IList<RecurringTask>> GetUnscheduled();
+        Task<bool> Delete(int id);
     }
 }

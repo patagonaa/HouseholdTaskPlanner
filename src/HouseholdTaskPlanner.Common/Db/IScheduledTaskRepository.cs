@@ -11,5 +11,7 @@ namespace HouseholdTaskPlanner.Common.Db
         Task Insert(ScheduledTask scheduledTask);
         Task SetState(int id, ScheduledTaskState state);
         Task SetAssignedUser(int id, int? userId);
+        Task DeleteForRecurringTask(int recurringTaskId);
+        Task<bool> Delete(int id);
     }
 }
