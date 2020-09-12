@@ -12,7 +12,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdTaskPlanner.WasteCollectionImporter", "HouseholdTaskPlanner.WasteCollectionImporter\HouseholdTaskPlanner.WasteCollectionImporter.csproj", "{57679197-9DB5-4DAD-A94C-C17D590C7775}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HouseholdTaskPlanner.WasteCollectionImporter", "HouseholdTaskPlanner.WasteCollectionImporter\HouseholdTaskPlanner.WasteCollectionImporter.csproj", "{57679197-9DB5-4DAD-A94C-C17D590C7775}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HouseholdTaskPlanner.TelegramBot", "HouseholdTaskPlanner.TelegramBot\HouseholdTaskPlanner.TelegramBot.csproj", "{047E8E4E-C209-476C-BB47-4C8F7D3232A3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdTaskPlanner.TelegramBot.Cli", "HouseholdTaskPlanner.TelegramBot.Cli\HouseholdTaskPlanner.TelegramBot.Cli.csproj", "{2B769F26-2D01-4A6C-88CD-A64FF7F5DFA4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,6 +36,14 @@ Global
 		{57679197-9DB5-4DAD-A94C-C17D590C7775}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{57679197-9DB5-4DAD-A94C-C17D590C7775}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{57679197-9DB5-4DAD-A94C-C17D590C7775}.Release|Any CPU.Build.0 = Release|Any CPU
+		{047E8E4E-C209-476C-BB47-4C8F7D3232A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{047E8E4E-C209-476C-BB47-4C8F7D3232A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{047E8E4E-C209-476C-BB47-4C8F7D3232A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{047E8E4E-C209-476C-BB47-4C8F7D3232A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B769F26-2D01-4A6C-88CD-A64FF7F5DFA4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B769F26-2D01-4A6C-88CD-A64FF7F5DFA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B769F26-2D01-4A6C-88CD-A64FF7F5DFA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B769F26-2D01-4A6C-88CD-A64FF7F5DFA4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
