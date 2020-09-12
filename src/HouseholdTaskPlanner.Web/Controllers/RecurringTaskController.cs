@@ -51,7 +51,7 @@ namespace HouseholdTaskPlanner.Web.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult> Delete([FromBody] int id)
+        public async Task<ActionResult> Delete([FromRoute] int id)
         {
             if (!await _recurringTaskRepository.Delete(id))
             {
