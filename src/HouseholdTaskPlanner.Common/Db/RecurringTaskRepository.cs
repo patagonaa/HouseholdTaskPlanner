@@ -73,16 +73,20 @@ WHERE
         {
             using (var connection = GetConnection())
             {
+                // unlink all non-todo scheduled tasks from recurring tasks so they don't get deleted
                 var nameUpdateSql = @"
 UPDATE
     ScheduledTask
 SET
-    ScheduledTask.Name = RecurringTask.Name
+    ScheduledTask.Name = RecurringTask.Name,
+    ScheduledTask.RecurringTaskId = NULL
 FROM ScheduledTask
 INNER JOIN RecurringTask ON RecurringTask.Id = ScheduledTask.RecurringTaskId
-WHERE RecurringTask.Id = @Id";
+WHERE
+    RecurringTask.Id = @Id AND
+    ScheduledTask.State <> @TodoState";
 
-                await connection.ExecuteAsync(nameUpdateSql, new { Id = id });
+                await connection.ExecuteAsync(nameUpdateSql, new { Id = id, State = (int)ScheduledTaskState.Todo });
 
                 var deleteSql = @"DELETE FROM RecurringTask WHERE Id = @Id";
 
