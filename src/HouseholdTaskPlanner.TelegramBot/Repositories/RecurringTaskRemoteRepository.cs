@@ -23,5 +23,8 @@ namespace HouseholdTaskPlanner.TelegramBot.Repositories
 
         public Task<bool> Update(RecurringTask task)
             => _api.Update(task);
+
+        public Task Delete(int id)
+            => _api.Delete(id);
     }
 }

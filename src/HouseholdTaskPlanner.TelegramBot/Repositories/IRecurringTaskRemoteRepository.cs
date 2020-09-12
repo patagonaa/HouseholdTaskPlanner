@@ -11,5 +11,7 @@ namespace HouseholdTaskPlanner.TelegramBot.Repositories
         Task Insert(RecurringTask task);
 
         Task<bool> Update(RecurringTask task);
+
+        Task Delete(int id);
     }
 }

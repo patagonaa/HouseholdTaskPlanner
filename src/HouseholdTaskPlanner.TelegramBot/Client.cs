@@ -148,8 +148,7 @@ namespace HouseholdTaskPlanner.TelegramBot
                                     $"{task.Name} | Interval {task.IntervalDays} days",
                                     string.Empty,
                                     task.Description);
-                // todo :)
-                taskList.Add(this.SendKeyboard(message, messageText, null));
+                taskList.Add(this.SendKeyboard(message, messageText, RecurringMessageDefaultKeyboard(task.Id.ToString())));
             }
 
             await Task.WhenAll(taskList);
@@ -333,21 +332,13 @@ namespace HouseholdTaskPlanner.TelegramBot
                                     }
                                 case RecurringAction.Delete:
                                     {
-                                        await SendNotSupportedMessage(oldMessage.Chat);
+                                        await _recurringTaskRepository.Delete(taskId);
+                                        await _bot.DeleteMessageAsync(oldMessage.Chat, oldMessage.MessageId);
                                         break;
                                     }
                                 default:
                                     { break; }
                             }
-                            if (action == RecurringAction.Edit)
-                            {
-                                await SendNotSupportedMessage(callbackQueryEventArgs.CallbackQuery.ChatInstance);
-                            }
-                            if (action == RecurringAction.Delete)
-                            {
-                                await SendNotSupportedMessage(callbackQueryEventArgs.CallbackQuery.ChatInstance);
-                            }
-
                             break;
                         }
                     case InlineDataFormatter.Prefixes.Scheduled:
