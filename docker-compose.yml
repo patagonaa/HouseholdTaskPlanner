@@ -8,6 +8,16 @@ services:
     environment:
       - "ConnectionString=Server=db,1433;Database=BeatSaverMatcher;User Id=sa;Password=!1Start1!;"
     restart: unless-stopped
+  bot:
+    image: household-planner-bot
+    build:
+      context: .
+      dockerfile: Dockerfile.bot
+    environment:
+      - "BotToken="
+      - "BackendLocation=http://web/api"
+      - "BasicAuth=user:pass"
+    restart: unless-stopped
 
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest

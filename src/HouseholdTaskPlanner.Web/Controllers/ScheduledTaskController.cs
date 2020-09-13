@@ -25,6 +25,15 @@ namespace HouseholdTaskPlanner.Web.Controllers
             return await _scheduledTaskRepository.GetList();
         }
 
+        [HttpPost()]
+        public Task Create([FromBody] ScheduledTaskViewModel model)
+            => _scheduledTaskRepository.Insert(new ScheduledTask
+            {
+                Date = model.Date,
+                Name = model.Name,
+                State = ScheduledTaskState.Todo,
+                RecurringTaskId = default
+            });
 
         [HttpPost("{id}/SetDone")]
         public async Task SetDone([FromRoute] int id)

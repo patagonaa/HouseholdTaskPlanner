@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Refit" Version="5.2.1" />
+    <PackageReference Include="Telegram.Bot" Version="15.7.1" />
+    <PackageReference Include="Telegram.Bot.Extensions.Polling" Version="0.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HouseholdTaskPlanner.Common\HouseholdTaskPlanner.Common.csproj" />
+  </ItemGroup>
+
+</Project>
