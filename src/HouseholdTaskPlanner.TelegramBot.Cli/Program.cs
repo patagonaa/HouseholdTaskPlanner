@@ -21,6 +21,8 @@ namespace HouseholdTaskPlanner.TelegramBot.Cli
 
         private static void ConfigureLogging(HostBuilderContext ctx, ILoggingBuilder loggingBuilder)
         {
+            loggingBuilder.ClearProviders();
+
             Log.Logger = new LoggerConfiguration()
                 .Enrich.FromLogContext()
                 .WriteTo.Console()
