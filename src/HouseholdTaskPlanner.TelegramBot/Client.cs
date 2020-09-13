@@ -121,6 +121,11 @@ namespace HouseholdTaskPlanner.TelegramBot
 
             var taskList = new List<Task>();
 
+            if (scheduledTasks.Count == 0)
+            {
+                taskList.Add(this.SendKeyboard(message, "No scheduled tasks available", default));
+            }
+
             foreach (var task in scheduledTasks)
             {
                 var assignedUserId = task.AssignedUser;
@@ -138,11 +143,16 @@ namespace HouseholdTaskPlanner.TelegramBot
 
         private async Task ListRecurringTasks(Message message)
         {
-            var scheduledTasks = (await _recurringTaskRepository.GetAll());
+            var recurringTasks = (await _recurringTaskRepository.GetAll());
 
             var taskList = new List<Task>();
 
-            foreach (var task in scheduledTasks)
+            if (recurringTasks.Count == 0)
+            {
+                taskList.Add(this.SendKeyboard(message, "No recurring tasks available", default));
+            }
+
+            foreach (var task in recurringTasks)
             {
                 string messageText = string.Join(Environment.NewLine,
                                     $"{task.Name} | Interval {task.IntervalDays} days",
@@ -190,7 +200,7 @@ namespace HouseholdTaskPlanner.TelegramBot
 
             await SendKeyboard(message,
                                $"{contents[0]} | Every {contents[1]} days \n\n {string.Join(Environment.NewLine, contents.Skip(2))}",
-                               RecurringMessageAcceptKeyboard(message.Text), false
+                               RecurringMessageAcceptKeyboard(string.Empty), false
                                );
 
         }
@@ -353,13 +363,13 @@ namespace HouseholdTaskPlanner.TelegramBot
                                         string[] titleContents = content[0].Split('|');
                                         string title = titleContents[0],
                                                days = Convert.ToInt32(titleContents[1].Split(new char[] { ' ' }, options: StringSplitOptions.RemoveEmptyEntries)[1]).ToString();
-                                        await SendNotSupportedMessage(chatId);
                                         await _scheduledRepository.Insert(new Common.Db.Models.ScheduledTaskViewModel
                                         {
                                             Name = title,
                                             Date = DateTime.Today.AddDays(Convert.ToInt32(days)),
                                             Description = string.Empty
                                         });
+                                        await _bot.EditMessageTextAsync(oldMessage.Chat, oldMessage.MessageId, text: oldMessage.Text, replyMarkup: default);
                                         break;
                                     }
                                 case ScheduledAction.Dismiss:
@@ -430,64 +440,5 @@ namespace HouseholdTaskPlanner.TelegramBot
                 receiveErrorEventArgs.ApiRequestException.Message
             );
         }
-    }
-
-    public static class InlineDataFormatter
-    {
-        public static class Prefixes
-        {
-            public const string Recurring = "rec";
-            public const string Scheduled = "sch";
-        }
-
-        public static string GetPrefix(string input)
-            => input.Split('-').FirstOrDefault();
-
-        public static string FormatRecurring(RecurringAction action, string id)
-            => string.Join("-", Prefixes.Recurring, Enum.GetName(typeof(RecurringAction), action), id);
-
-        public static (RecurringAction action, int taskId) ParseRecurring(string input)
-        {
-            string[] data = input.Split('-');
-
-            if (!data[0].Equals(Prefixes.Recurring))
-            {
-                throw new ArgumentException($"Broken Callbackdata {input}, expected Prefix to be {Prefixes.Recurring}");
-            }
-
-            return ((RecurringAction)Enum.Parse(typeof(RecurringAction), data[1], true), Convert.ToInt32(data[2]));
-        }
-
-        public static string FormatScheduled(ScheduledAction action, string taskId)
-           => string.Join("-", Prefixes.Scheduled, Enum.GetName(typeof(ScheduledAction), action), taskId);
-
-        public static (ScheduledAction action, int taskId) ParseScheduled(string input)
-        {
-            string[] data = input.Split('-');
-
-            if (!data[0].Equals(Prefixes.Scheduled))
-            {
-                throw new ArgumentException($"Broken Callbackdata {input}, expected Prefix to be {Prefixes.Scheduled}");
-            }
-
-            return ((ScheduledAction)Enum.Parse(typeof(ScheduledAction), data[1], true), string.IsNullOrWhiteSpace(data[2]) ? 0 : Convert.ToInt32(data[2]));
-        }
-
-    }
-    public enum RecurringAction
-    {
-        Accept,
-        Dismiss,
-        Edit,
-        Delete
-    }
-    public enum ScheduledAction
-    {
-        Accept,
-        Dismiss,
-        Assign,
-        Unassign,
-        Delete,
-        Done,
     }
 }
