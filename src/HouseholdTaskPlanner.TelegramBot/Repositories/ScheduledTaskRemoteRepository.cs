@@ -2,7 +2,6 @@
 using Refit;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace HouseholdTaskPlanner.TelegramBot.Repositories
@@ -10,9 +9,9 @@ namespace HouseholdTaskPlanner.TelegramBot.Repositories
     public class ScheduledTaskRemoteRepository : IScheduledTaskRemoteRepository
     {
         private readonly IScheduledTaskRestApi _api;
-        public ScheduledTaskRemoteRepository(HttpClient client)
+        public ScheduledTaskRemoteRepository(TaskplannerApiHttpClientFactory httpClientFactory)
         {
-            _api = RestService.For<IScheduledTaskRestApi>(client);
+            _api = RestService.For<IScheduledTaskRestApi>(httpClientFactory.Get());
         }
 
         public async Task<ScheduledTaskViewModel> Get(int id)

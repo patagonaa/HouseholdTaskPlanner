@@ -10,9 +10,9 @@ namespace HouseholdTaskPlanner.TelegramBot.Repositories
     {
         private readonly IRecurringTaskRestApi _api;
 
-        public RecurringTaskRemoteRepository(HttpClient client)
+        public RecurringTaskRemoteRepository(TaskplannerApiHttpClientFactory httpClientFactory)
         {
-            _api = RestService.For<IRecurringTaskRestApi>(client);
+            _api = RestService.For<IRecurringTaskRestApi>(httpClientFactory.Get());
         }
 
         public Task<IList<RecurringTask>> GetAll()

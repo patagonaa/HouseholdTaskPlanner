@@ -2,8 +2,7 @@
 {
     public class ApiConfiguration
     {
-        public string BackendLocation { get; set; } = "localhost";
-
+        public string BackendLocation { get; set; } = "http://localhost/api";
         public string BasicAuth { get; set; }
     }
 }

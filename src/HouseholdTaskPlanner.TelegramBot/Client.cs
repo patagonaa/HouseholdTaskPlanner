@@ -1,4 +1,5 @@
 ﻿using HouseholdTaskPlanner.TelegramBot.Repositories;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,9 +20,9 @@ namespace HouseholdTaskPlanner.TelegramBot
         private readonly IUserRemoteRepository _userRepository;
         private readonly IRecurringTaskRemoteRepository _recurringTaskRepository;
 
-        public Client(BotConfiguration configuration, IUserRemoteRepository userRepository, IRecurringTaskRemoteRepository recurringTaskRepository, IScheduledTaskRemoteRepository scheduledRepository)
+        public Client(IOptions<BotConfiguration> configuration, IUserRemoteRepository userRepository, IRecurringTaskRemoteRepository recurringTaskRepository, IScheduledTaskRemoteRepository scheduledRepository)
         {
-            _configuration = configuration;
+            _configuration = configuration.Value;
             _bot = new TelegramBotClient(_configuration.BotToken);
             _scheduledRepository = scheduledRepository;
             _userRepository = userRepository;
