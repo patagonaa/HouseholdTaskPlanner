@@ -1,5 +1,5 @@
-﻿using CommandLine;
-using HouseholdTaskPlanner.TelegramBot.Repositories;
+﻿using HouseholdTaskPlanner.TelegramBot.Repositories;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -12,30 +12,26 @@ namespace HouseholdTaskPlanner.TelegramBot.Cli
     {
         public static async Task Main(string[] args)
         {
-            BotConfiguration botConfiguration = default;
-            ApiConfiguration apiConfiguration = default;
+            var configurationBuilder = new ConfigurationBuilder();
 
-            var parser = Parser.Default.ParseArguments<CliOptions>(args)
-                .WithParsed(options =>
-                {
-                    botConfiguration = new BotConfiguration
-                    {
-                        BotToken = options.BotToken
-                    };
-                    apiConfiguration = new ApiConfiguration
-                    {
-                        BackendLocation = options.BackendLocation,
-                        BasicAuth = options.BasicAuth ?? string.Empty
+            var configuration = configurationBuilder
+                                    .AddEnvironmentVariables()
+                                    .Build();
 
-                    };
-                })
-                .WithNotParsed(error =>
-                {
-                    Console.WriteLine($"{error} could not be parsed.");
-                });
-
-            if (botConfiguration == null || apiConfiguration == null)
+            BotConfiguration botConfiguration = new BotConfiguration
             {
+                BotToken = configuration[KnownEnvironmentVariables.BotToken]
+            };
+            ApiConfiguration apiConfiguration = new ApiConfiguration
+            {
+                BackendLocation = configuration[KnownEnvironmentVariables.Backend],
+                BasicAuth = configuration[KnownEnvironmentVariables.BasicAuth]
+            };
+
+            if (string.IsNullOrWhiteSpace(botConfiguration.BotToken) ||
+                string.IsNullOrWhiteSpace(apiConfiguration.BackendLocation))
+            {
+                Console.Error.WriteLine("Invalid configuration. BotToken and Backend are required parameters");
                 return;
             }
 
