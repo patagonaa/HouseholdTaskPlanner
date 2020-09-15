@@ -1,4 +1,5 @@
 ﻿using HouseholdTaskPlanner.TelegramBot.Repositories;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -19,14 +20,20 @@ namespace HouseholdTaskPlanner.TelegramBot
         private readonly IScheduledTaskRemoteRepository _scheduledRepository;
         private readonly IUserRemoteRepository _userRepository;
         private readonly IRecurringTaskRemoteRepository _recurringTaskRepository;
+        private readonly ILogger<Client> _logger;
 
-        public Client(IOptions<BotConfiguration> configuration, IUserRemoteRepository userRepository, IRecurringTaskRemoteRepository recurringTaskRepository, IScheduledTaskRemoteRepository scheduledRepository)
+        public Client(IOptions<BotConfiguration> configuration,
+                      ILogger<Client> logger,
+                      IUserRemoteRepository userRepository,
+                      IRecurringTaskRemoteRepository recurringTaskRepository,
+                      IScheduledTaskRemoteRepository scheduledRepository)
         {
             _configuration = configuration.Value;
             _bot = new TelegramBotClient(_configuration.BotToken);
             _scheduledRepository = scheduledRepository;
             _userRepository = userRepository;
             _recurringTaskRepository = recurringTaskRepository;
+            _logger = logger;
         }
 
         public async Task Startup()
@@ -48,9 +55,17 @@ namespace HouseholdTaskPlanner.TelegramBot
 
         private async void BotOnMessageReceived(object sender, MessageEventArgs messageEventArgs)
         {
+            _logger.LogInformation("{ChatId} {UserId} {messageText}", messageEventArgs.Message.Chat.Id, messageEventArgs.Message.From.Id, messageEventArgs.Message.Text);
+
             var message = messageEventArgs.Message;
             if (message == null || message.Type != MessageType.Text)
                 return;
+
+            if (message.Chat.Id != _configuration.AllowedChat)
+            {
+                await SendNotAllowedChatMessage(message.Chat.Id);
+                return;
+            }
 
             switch (message.Text.Split(' ').First())
             {
@@ -98,10 +113,10 @@ namespace HouseholdTaskPlanner.TelegramBot
             var users = (await _userRepository.GetAll()).ToList();
 
             var assignedUserId = scheduledTask.AssignedUser;
-            var assignedUser = assignedUserId.HasValue ? users.Find(user => user.TelegramId == assignedUserId.GetValueOrDefault(-1)) : null;
+            var assignedUser = assignedUserId.HasValue ? users.Find(user => user.Id == assignedUserId.GetValueOrDefault(-1)) : null;
 
             return string.Join(Environment.NewLine,
-                               $"{scheduledTask.Name} | {(assignedUser != null ? $"Assigned to @${assignedUser.TelegramUsername}" : "Not Assigned")}",
+                               $"{scheduledTask.Name} | {(assignedUser != null ? $"Assigned to @{assignedUser.TelegramUsername}" : "Not Assigned")}",
                                string.Empty,
                                description).Trim();
         }
@@ -130,13 +145,19 @@ namespace HouseholdTaskPlanner.TelegramBot
             foreach (var task in scheduledTasks)
             {
                 var assignedUserId = task.AssignedUser;
-                var assignedUser = assignedUserId.HasValue ? users.Find(user => user.TelegramId == assignedUserId.GetValueOrDefault(-1)) : null;
+                var assignedUser = assignedUserId.HasValue ? users.Find(user => user.Id == assignedUserId.GetValueOrDefault(-1)) : null;
 
                 string messageText = string.Join(Environment.NewLine,
-                                    $"{task.Name} | {(assignedUser != null ? $"Assigned to @${assignedUser.TelegramUsername}" : "Not Assigned")}",
+                                    $"{task.Name} | {(assignedUser != null ? $"Assigned to @{assignedUser.TelegramUsername}" : "Not Assigned")}",
                                     string.Empty,
                                     task.Description);
-                taskList.Add(this.SendKeyboard(message, messageText, ScheduledMessageDefaultKeyboard(task.Id.ToString())));
+                if (assignedUser == null)
+                {
+                    taskList.Add(this.SendKeyboard(message, messageText, ScheduledMessageDefaultKeyboard(task.Id.ToString())));
+                    continue;
+                }
+
+                taskList.Add(this.SendKeyboard(message, messageText, ScheduledMessageAssignedKeyboard(task.Id.ToString())));
             }
 
             await Task.WhenAll(taskList);
@@ -186,7 +207,11 @@ namespace HouseholdTaskPlanner.TelegramBot
         private async Task CreateNewRecurringTask(Message message)
         {
             string[] contents = message.Text.Split('\n');
-            if (contents.Length < 3 || contents.Length >= 2 && !uint.TryParse(contents[1], out uint _))
+
+            string daysStr = contents.Length == 2 ? contents[1].Split(' ').FirstOrDefault() : string.Empty;
+            bool canParseDays = uint.TryParse(daysStr, out uint _);
+
+            if (contents.Length < 3 || !canParseDays)
             {
                 await _bot.SendTextMessageAsync(
                     chatId: message.Chat.Id,
@@ -203,13 +228,16 @@ namespace HouseholdTaskPlanner.TelegramBot
                                $"{contents[0]} | Every {contents[1]} days \n\n {string.Join(Environment.NewLine, contents.Skip(2))}",
                                RecurringMessageAcceptKeyboard(string.Empty), false
                                );
-
         }
 
         private async Task CreateNewScheduledTask(Message message)
         {
             string[] contents = message.Text.Split('\n');
-            if (contents.Length != 2 || contents.Length == 2 && !uint.TryParse(contents[1].Split(' ').FirstOrDefault(), out uint _))
+
+            string daysStr = contents.Length == 2 ? contents[1].Split(' ').FirstOrDefault() : string.Empty;
+            bool canParseDays = uint.TryParse(daysStr, out uint _);
+
+            if (contents.Length != 2 || !canParseDays)
             {
                 await _bot.SendTextMessageAsync(
                     chatId: message.Chat.Id,
@@ -217,7 +245,7 @@ namespace HouseholdTaskPlanner.TelegramBot
                 );
                 await _bot.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: "/createSingle Take special garbage out\n4 (days)\nDue to special circumstances it is necessary to take care of special garbage in less than 4 days."
+                    text: "/createSingle Take special garbage out\n4 (days)"
                 );
                 return;
             }
@@ -234,6 +262,7 @@ namespace HouseholdTaskPlanner.TelegramBot
                 new []
                 {
                     InlineKeyboardButton.WithCallbackData("✔ I can do that!", InlineDataFormatter.FormatScheduled(ScheduledAction.Assign,taskId)),
+                    InlineKeyboardButton.WithCallbackData("🚮 Delete ", InlineDataFormatter.FormatScheduled(ScheduledAction.Delete,taskId))
                 }
             });
 
@@ -292,6 +321,9 @@ namespace HouseholdTaskPlanner.TelegramBot
             }
         }
 
+        private Task SendNotAllowedChatMessage(ChatId id)
+            => _bot.SendTextMessageAsync(id, "Sorry, I'm not allowed to talk to you here.");
+
         private Task SendUnknownUserMessage(ChatId id)
             => _bot.SendTextMessageAsync(id, "Sorry, you're not known to the DB yet");
 
@@ -305,9 +337,6 @@ namespace HouseholdTaskPlanner.TelegramBot
             {
                 string inlineData = callbackQueryEventArgs.CallbackQuery.Data;
 
-                var users = await _userRepository.GetAll();
-                var telegramId = callbackQueryEventArgs.CallbackQuery.From.Id;
-                var user = users.FirstOrDefault(x => x.TelegramId == telegramId);
                 var chatId = callbackQueryEventArgs.CallbackQuery.Message.Chat;
                 var oldMessage = callbackQueryEventArgs.CallbackQuery.Message;
 
@@ -343,7 +372,7 @@ namespace HouseholdTaskPlanner.TelegramBot
                                     }
                                 case RecurringAction.Delete:
                                     {
-                                        await _recurringTaskRepository.Delete(taskId);
+                                        await _recurringTaskRepository.Delete(taskId.Value);
                                         await _bot.DeleteMessageAsync(oldMessage.Chat, oldMessage.MessageId);
                                         break;
                                     }
@@ -381,37 +410,42 @@ namespace HouseholdTaskPlanner.TelegramBot
                                 case ScheduledAction.Delete:
                                     {
                                         await _bot.DeleteMessageAsync(oldMessage.Chat, oldMessage.MessageId);
-                                        await _scheduledRepository.Delete(taskId);
+                                        await _scheduledRepository.Delete(taskId.Value);
                                         break;
                                     }
                                 case ScheduledAction.Assign:
                                     {
+                                        var users = await _userRepository.GetAll();
+                                        var telegramId = callbackQueryEventArgs.CallbackQuery.From.Id;
+                                        var user = users.FirstOrDefault(x => x.TelegramId == telegramId);
+
                                         if (user == null)
                                         {
                                             await SendUnknownUserMessage(chatId);
                                             break;
                                         }
-                                        await _scheduledRepository.SetAssignedUser(taskId, user.Id);
+
+                                        await _scheduledRepository.SetAssignedUser(taskId.Value, user.Id);
                                         await this.SendKeyboard(oldMessage,
-                                                                await GetMessageTextForScheduledMessage(taskId),
+                                                                await GetMessageTextForScheduledMessage(taskId.Value),
                                                                 ScheduledMessageAssignedKeyboard(taskId.ToString()),
                                                                 true);
                                         break;
                                     }
                                 case ScheduledAction.Unassign:
                                     {
-                                        await _scheduledRepository.SetAssignedUser(taskId, default);
+                                        await _scheduledRepository.SetAssignedUser(taskId.Value, -1);
                                         await this.SendKeyboard(oldMessage,
-                                                                await GetMessageTextForScheduledMessage(taskId),
-                                                                ScheduledMessageAssignedKeyboard(taskId.ToString()),
+                                                                await GetMessageTextForScheduledMessage(taskId.Value),
+                                                                ScheduledMessageDefaultKeyboard(taskId.ToString()),
                                                                 true);
                                         break;
                                     }
                                 case ScheduledAction.Done:
                                     {
-                                        await _scheduledRepository.SetDone(taskId);
+                                        await _scheduledRepository.SetDone(taskId.Value);
                                         await this.SendKeyboard(oldMessage,
-                                                                await GetMessageTextForScheduledMessage(taskId),
+                                                                await GetMessageTextForScheduledMessage(taskId.Value),
                                                                 Emptykeyboard(),
                                                                 true);
                                         break;
