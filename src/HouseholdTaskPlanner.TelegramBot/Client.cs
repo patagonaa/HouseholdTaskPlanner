@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
@@ -21,6 +22,8 @@ namespace HouseholdTaskPlanner.TelegramBot
         private readonly IUserRemoteRepository _userRepository;
         private readonly IRecurringTaskRemoteRepository _recurringTaskRepository;
         private readonly ILogger<Client> _logger;
+        private CronlikeTimer _dailyScheduler;
+        private CronlikeTimer _weeklyScheduler;
 
         public Client(IOptions<BotConfiguration> configuration,
                       ILogger<Client> logger,
@@ -34,12 +37,19 @@ namespace HouseholdTaskPlanner.TelegramBot
             _userRepository = userRepository;
             _recurringTaskRepository = recurringTaskRepository;
             _logger = logger;
+
         }
 
         public async Task Startup()
         {
             var me = await _bot.GetMeAsync();
             Console.Title = me.Username;
+
+            _dailyScheduler = new CronlikeTimer("0 8 * * 1-6", () => SendDailyTasks().Start());
+            _weeklyScheduler = new CronlikeTimer("0 8 * * 7", () => SendWeeklyTasks().Start());
+
+            _dailyScheduler.Start();
+            _weeklyScheduler.Start();
 
             _bot.OnMessage += BotOnMessageReceived;
             _bot.OnMessageEdited += BotOnMessageReceived;
@@ -51,6 +61,43 @@ namespace HouseholdTaskPlanner.TelegramBot
 
             Console.ReadLine();
             _bot.StopReceiving();
+        }
+
+        private async Task SendDailyTasks()
+        {
+            try
+            {
+                await ListUpcomingTasks(
+                new Message
+                {
+                    Chat = new Chat { Id = _configuration.AllowedChat }
+                },
+                lookahead: TimeSpan.FromDays(1));
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Could not send daily tasks", _configuration.AllowedChat);
+            }
+        }
+
+        private async Task SendWeeklyTasks()
+        {
+            try
+            {
+                await ListUpcomingTasks(
+                new Message
+                {
+                    Chat = new Chat
+                    {
+                        Id = _configuration.AllowedChat
+                    }
+                },
+                lookahead: TimeSpan.FromDays(7));
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Could not send daily tasks", _configuration.AllowedChat);
+            }
         }
 
         private async void BotOnMessageReceived(object sender, MessageEventArgs messageEventArgs)
