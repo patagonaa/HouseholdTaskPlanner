@@ -15,12 +15,12 @@ namespace HouseholdTaskPlanner.TelegramBot.Cli
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            await _client.Startup();
+            await _client.Start();
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
-            return Task.CompletedTask;
+            await _client.Stop();
         }
     }
 }

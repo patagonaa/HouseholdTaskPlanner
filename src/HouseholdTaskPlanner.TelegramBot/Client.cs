@@ -4,7 +4,6 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
@@ -40,7 +39,7 @@ namespace HouseholdTaskPlanner.TelegramBot
 
         }
 
-        public async Task Startup()
+        public async Task Start()
         {
             var me = await _bot.GetMeAsync();
             Console.Title = me.Username;
@@ -60,8 +59,14 @@ namespace HouseholdTaskPlanner.TelegramBot
             Console.WriteLine($"Start listening for @{me.Username}");
 
             Console.ReadLine();
-            _bot.StopReceiving();
         }
+
+        public Task Stop()
+        {
+            _bot.StopReceiving();
+            return Task.CompletedTask;
+        }
+
 
         private async Task SendDailyTasks()
         {
@@ -114,7 +119,7 @@ namespace HouseholdTaskPlanner.TelegramBot
                 return;
             }
 
-            switch (message.Text.Split(' ').First())
+            switch (message.Text.Split(' ', '@').First())
             {
                 // create new task
                 case "/createRecurring":
