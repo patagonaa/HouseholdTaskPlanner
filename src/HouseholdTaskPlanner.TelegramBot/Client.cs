@@ -177,47 +177,44 @@ namespace HouseholdTaskPlanner.TelegramBot
         {
             var today = DateTime.Today;
             var scheduledTasks = (await _scheduledRepository.GetList())
-                    .Where(task => today <= task.Date).ToList();
+                    .Where(task => task.Date >= today).ToList();
 
             if (lookahead.HasValue)
             {
                 var lookaheadDate = today + lookahead.Value;
-                scheduledTasks = scheduledTasks.Where(task => task.Date <= lookaheadDate && today <= task.Date).ToList();
+                scheduledTasks = scheduledTasks.Where(task => task.Date <= lookaheadDate).ToList();
             }
 
-            var users = (await _userRepository.GetAll()).ToList();
-
-            var taskList = new List<Task>();
+            var users = await _userRepository.GetAll();
 
             if (scheduledTasks.Count == 0)
             {
-                taskList.Add(this.SendKeyboard(message, "No scheduled tasks available", default));
+                await this.SendKeyboard(message, "No scheduled tasks available", default);
             }
 
             foreach (var task in scheduledTasks)
             {
                 var assignedUserId = task.AssignedUser;
-                var assignedUser = assignedUserId.HasValue ? users.Find(user => user.Id == assignedUserId.GetValueOrDefault(-1)) : null;
+                var assignedUser = assignedUserId.HasValue ? users.SingleOrDefault(user => user.Id == assignedUserId.GetValueOrDefault(-1)) : null;
 
                 string messageText = string.Join(Environment.NewLine,
-                                    $"{task.Name} | {(assignedUser != null ? $"Assigned to @{assignedUser.TelegramUsername}" : "Not Assigned")}",
+                                    $"{(lookahead > TimeSpan.FromDays(1) ? (task.Date.ToString("yyyy-MM-dd") + " | ") : string.Empty)}{task.Name} | {(assignedUser != null ? $"Assigned to @{assignedUser.TelegramUsername}" : "Not Assigned")}",
                                     string.Empty,
                                     task.Description);
                 if (assignedUser == null)
                 {
-                    taskList.Add(this.SendKeyboard(message, messageText, ScheduledMessageDefaultKeyboard(task.Id.ToString())));
-                    continue;
+                   await this.SendKeyboard(message, messageText, ScheduledMessageDefaultKeyboard(task.Id.ToString()));
                 }
-
-                taskList.Add(this.SendKeyboard(message, messageText, ScheduledMessageAssignedKeyboard(task.Id.ToString())));
+                else
+                {
+                    await this.SendKeyboard(message, messageText, ScheduledMessageAssignedKeyboard(task.Id.ToString()));
+                }
             }
-
-            await Task.WhenAll(taskList);
         }
 
         private async Task ListRecurringTasks(Message message)
         {
-            var recurringTasks = (await _recurringTaskRepository.GetAll());
+            var recurringTasks = await _recurringTaskRepository.GetAll();
 
             var taskList = new List<Task>();
 

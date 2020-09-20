@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Cronos;
+using System;
 using System.Threading;
 
 namespace HouseholdTaskPlanner.TelegramBot
@@ -8,13 +7,13 @@ namespace HouseholdTaskPlanner.TelegramBot
     internal class CronlikeTimer
     {
         private readonly Action _callback;
-        private readonly Cronos.CronExpression _cronExpression;
+        private readonly CronExpression _cronExpression;
         private readonly Timer _timer;
 
         public CronlikeTimer(string pattern, Action callback)
         {
             _callback = callback;
-            _cronExpression = Cronos.CronExpression.Parse(pattern);
+            _cronExpression = CronExpression.Parse(pattern);
             _timer = new Timer(new TimerCallback(Callback));
         }
 
