@@ -537,7 +537,10 @@ namespace HouseholdTaskPlanner.TelegramBot
 
         private IList<string> DeserializeHumanReadable(string str)
         {
-            return str.Split(new string[] { " | " }, StringSplitOptions.None);
+            return str
+                .Split(new string[] { "|" }, StringSplitOptions.None)
+                .Select(x => x.Trim())
+                .ToList();
         }
 
         private string GetCallbackData(CallbackType callbackType, ActionType actionType, int? id = default)
