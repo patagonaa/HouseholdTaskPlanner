@@ -75,13 +75,13 @@ namespace HouseholdTaskPlanner.TelegramBot
                 await ListUpcomingTasks(
                 new Message
                 {
-                    Chat = new Chat { Id = _configuration.AllowedChat }
+                    Chat = new Chat { Id = _configuration.ScheduleChat }
                 },
                 lookahead: TimeSpan.FromDays(1));
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Could not send daily tasks", _configuration.AllowedChat);
+                _logger.LogError(e, "Could not send daily tasks");
             }
         }
 
@@ -94,14 +94,14 @@ namespace HouseholdTaskPlanner.TelegramBot
                 {
                     Chat = new Chat
                     {
-                        Id = _configuration.AllowedChat
+                        Id = _configuration.ScheduleChat
                     }
                 },
                 lookahead: TimeSpan.FromDays(7));
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Could not send daily tasks", _configuration.AllowedChat);
+                _logger.LogError(e, "Could not send weekly tasks");
             }
         }
 
@@ -113,7 +113,7 @@ namespace HouseholdTaskPlanner.TelegramBot
             if (message == null || message.Type != MessageType.Text)
                 return;
 
-            if (message.Chat.Id != _configuration.AllowedChat)
+            if (!_configuration.AllowedChats.Contains(message.Chat.Id))
             {
                 await SendNotAllowedChatMessage(message.Chat.Id);
                 return;
@@ -203,7 +203,7 @@ namespace HouseholdTaskPlanner.TelegramBot
                                     task.Description);
                 if (assignedUser == null)
                 {
-                   await this.SendKeyboard(message, messageText, ScheduledMessageDefaultKeyboard(task.Id.ToString()));
+                    await this.SendKeyboard(message, messageText, ScheduledMessageDefaultKeyboard(task.Id.ToString()));
                 }
                 else
                 {
