@@ -19,4 +19,10 @@
     <ProjectReference Include="..\HouseholdTaskPlanner.TelegramBot\HouseholdTaskPlanner.TelegramBot.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="configs\appSettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

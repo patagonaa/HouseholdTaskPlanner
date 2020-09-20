@@ -1,10 +1,13 @@
 ﻿namespace HouseholdTaskPlanner.TelegramBot
 {
-    public enum RecurringAction
+    enum ActionType
     {
         Accept,
         Dismiss,
         Edit,
-        Delete
+        Delete,
+        Assign,
+        Unassign,
+        Done
     }
 }

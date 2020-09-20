@@ -47,6 +47,7 @@ namespace HouseholdTaskPlanner.TelegramBot.Cli
         private static void ConfigureAppConfiguration(HostBuilderContext ctx, IConfigurationBuilder configBuilder)
         {
             configBuilder
+                .AddJsonFile("configs/appSettings.json", optional: true)
                 .AddEnvironmentVariables()
                 .Build();
         }

@@ -5,3 +5,4 @@ obj/
 wwwroot
 node_modules/
 launchSettings.json
+appSettings.json

@@ -1,8 +1,10 @@
 ﻿using HouseholdTaskPlanner.TelegramBot.Repositories;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -36,7 +38,6 @@ namespace HouseholdTaskPlanner.TelegramBot
             _userRepository = userRepository;
             _recurringTaskRepository = recurringTaskRepository;
             _logger = logger;
-
         }
 
         public async Task Start()
@@ -119,7 +120,7 @@ namespace HouseholdTaskPlanner.TelegramBot
                 return;
             }
 
-            switch (message.Text.Split(' ', '@').First())
+            switch (GetMessageCommand(message.Text))
             {
                 // create new task
                 case "/createRecurring":
@@ -198,16 +199,16 @@ namespace HouseholdTaskPlanner.TelegramBot
                 var assignedUser = assignedUserId.HasValue ? users.SingleOrDefault(user => user.Id == assignedUserId.GetValueOrDefault(-1)) : null;
 
                 string messageText = string.Join(Environment.NewLine,
-                                    $"{(lookahead > TimeSpan.FromDays(1) ? (task.Date.ToString("yyyy-MM-dd") + " | ") : string.Empty)}{task.Name} | {(assignedUser != null ? $"Assigned to @{assignedUser.TelegramUsername}" : "Not Assigned")}",
+                                    $"{((lookahead ?? TimeSpan.MaxValue) > TimeSpan.FromDays(1) ? (task.Date.ToString("dddd yyyy-MM-dd", CultureInfo.InvariantCulture) + " | ") : string.Empty)}{task.Name} | {(assignedUser != null ? $"Assigned to @{assignedUser.TelegramUsername}" : "Not Assigned")}",
                                     string.Empty,
                                     task.Description);
                 if (assignedUser == null)
                 {
-                    await this.SendKeyboard(message, messageText, ScheduledMessageDefaultKeyboard(task.Id.ToString()));
+                    await this.SendKeyboard(message, messageText, ScheduledMessageDefaultKeyboard(task.Id));
                 }
                 else
                 {
-                    await this.SendKeyboard(message, messageText, ScheduledMessageAssignedKeyboard(task.Id.ToString()));
+                    await this.SendKeyboard(message, messageText, ScheduledMessageAssignedKeyboard(task.Id));
                 }
             }
         }
@@ -229,7 +230,7 @@ namespace HouseholdTaskPlanner.TelegramBot
                                     $"{task.Name} | Interval {task.IntervalDays} days",
                                     string.Empty,
                                     task.Description);
-                taskList.Add(this.SendKeyboard(message, messageText, RecurringMessageDefaultKeyboard(task.Id.ToString())));
+                taskList.Add(this.SendKeyboard(message, messageText, RecurringMessageDefaultKeyboard(task.Id)));
             }
 
             await Task.WhenAll(taskList);
@@ -255,103 +256,102 @@ namespace HouseholdTaskPlanner.TelegramBot
 
         private async Task CreateNewRecurringTask(Message message)
         {
-            string[] contents = message.Text.Split('\n');
+            var contentLines = GetMessageContent(message.Text).Split('\n');
 
-            string daysStr = contents.Length == 2 ? contents[1].Split(' ').FirstOrDefault() : string.Empty;
-            bool canParseDays = uint.TryParse(daysStr, out uint _);
+            string daysStr = contentLines.Length >= 2 ? contentLines[0] : string.Empty;
+            bool canParseDays = int.TryParse(daysStr, out int parsedDays);
 
-            if (contents.Length < 3 || !canParseDays)
+            if (contentLines.Length < 2 || !canParseDays)
             {
                 await _bot.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: "Use this command to create a new recurring task. Use following structure to do so. Currently only days are supported for scheduling tasks"
+                    text: "Use this command to create a new recurring task. Use following structure to do so. Scheduled time is in days."
                 );
                 await _bot.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: "/createRecurring Vacuum Weekly\n7 (days)\nTo ensure a clean space for living, it is adviseable to vacuum at least once a week commonly used rooms."
+                    text: "/createRecurring 7\nVacuum Weekly\nTo ensure a clean space for living, it is adviseable to vacuum at least once a week commonly used rooms."
                 );
                 return;
             }
 
             await SendKeyboard(message,
-                               $"{contents[0]} | Every {contents[1]} days \n\n {string.Join(Environment.NewLine, contents.Skip(2))}",
-                               RecurringMessageAcceptKeyboard(string.Empty), false
+                               SerializeHumanReadable(new string[] { daysStr, contentLines[1], string.Join(Environment.NewLine, contentLines.Skip(2))}),
+                               RecurringMessageAcceptKeyboard(), false
                                );
         }
 
         private async Task CreateNewScheduledTask(Message message)
         {
-            string[] contents = message.Text.Split('\n');
+            var contentLines = GetMessageContent(message.Text).Split('\n');
+            string daysStr = contentLines.Length >= 2 ? contentLines[0] : string.Empty;
+            bool canParseDays = int.TryParse(daysStr, out int parsedDays);
 
-            string daysStr = contents.Length == 2 ? contents[1].Split(' ').FirstOrDefault() : string.Empty;
-            bool canParseDays = uint.TryParse(daysStr, out uint _);
-
-            if (contents.Length != 2 || !canParseDays)
+            if (contentLines.Length != 2 || !canParseDays)
             {
                 await _bot.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: "Use this command to schedule a one-off task. Use following structure to do so. Currently only days are supported for scheduling"
+                    text: "Use this command to schedule a one-off task. Use following structure to do so. Scheduled time is in days."
                 );
                 await _bot.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: "/createSingle Take special garbage out\n4 (days)"
+                    text: "/createSingle 4 (days)\nTake special garbage out"
                 );
                 return;
             }
 
             await SendKeyboard(message,
-                               $"{contents[0].Replace("/createSingle", "")} | In {contents[1]} days due",
-                               ScheduledMessageAcceptKeyboard(string.Empty), false
+                               SerializeHumanReadable(new string[] { daysStr, contentLines[1] }),
+                               ScheduledMessageAcceptKeyboard(), false
                                );
         }
 
-        private InlineKeyboardMarkup ScheduledMessageDefaultKeyboard(string taskId)
+        private InlineKeyboardMarkup ScheduledMessageDefaultKeyboard(int taskId)
             => new InlineKeyboardMarkup(new[]
             {
                 new []
                 {
-                    InlineKeyboardButton.WithCallbackData("✔ I can do that!", InlineDataFormatter.FormatScheduled(ScheduledAction.Assign,taskId)),
-                    InlineKeyboardButton.WithCallbackData("🚮 Delete ", InlineDataFormatter.FormatScheduled(ScheduledAction.Delete,taskId))
+                    InlineKeyboardButton.WithCallbackData("✔ I can do that!", GetCallbackData(CallbackType.ScheduledTask, ActionType.Assign, taskId)),
+                    InlineKeyboardButton.WithCallbackData("🚮 Delete ", GetCallbackData(CallbackType.ScheduledTask, ActionType.Delete, taskId))
                 }
             });
 
-        private InlineKeyboardMarkup ScheduledMessageAssignedKeyboard(string taskId)
+        private InlineKeyboardMarkup ScheduledMessageAssignedKeyboard(int taskId)
             => new InlineKeyboardMarkup(new[]
             {
                 new []
                 {
-                    InlineKeyboardButton.WithCallbackData("❌ I can't do that!", InlineDataFormatter.FormatScheduled(ScheduledAction.Unassign,taskId)),
-                    InlineKeyboardButton.WithCallbackData("✔ I'm done!", InlineDataFormatter.FormatScheduled(ScheduledAction.Done,taskId)),
+                    InlineKeyboardButton.WithCallbackData("❌ I can't do that!", GetCallbackData(CallbackType.ScheduledTask, ActionType.Unassign, taskId)),
+                    InlineKeyboardButton.WithCallbackData("✔ I'm done!", GetCallbackData(CallbackType.ScheduledTask, ActionType.Done, taskId)),
                 }
             });
 
-        private InlineKeyboardMarkup ScheduledMessageAcceptKeyboard(string data)
+        private InlineKeyboardMarkup ScheduledMessageAcceptKeyboard()
             => new InlineKeyboardMarkup(new[]
             {
                 new []
                 {
-                    InlineKeyboardButton.WithCallbackData("❌ Not what I wanted", InlineDataFormatter.FormatScheduled(ScheduledAction.Dismiss,data)),
-                    InlineKeyboardButton.WithCallbackData("✔ Schedule this task", InlineDataFormatter.FormatScheduled(ScheduledAction.Accept,data)),
+                    InlineKeyboardButton.WithCallbackData("❌ Not what I wanted", GetCallbackData(CallbackType.ScheduledTask, ActionType.Dismiss)),
+                    InlineKeyboardButton.WithCallbackData("✔ Schedule this task", GetCallbackData(CallbackType.ScheduledTask, ActionType.Accept))
                 }
             });
 
-        private InlineKeyboardMarkup RecurringMessageAcceptKeyboard(string data)
+        private InlineKeyboardMarkup RecurringMessageAcceptKeyboard()
             => new InlineKeyboardMarkup(new[]
             {
                 new []
                 {
-                    InlineKeyboardButton.WithCallbackData("❌ Not what I wanted", InlineDataFormatter.FormatRecurring(RecurringAction.Dismiss,data)),
-                    InlineKeyboardButton.WithCallbackData("✔ Schedule this task", InlineDataFormatter.FormatRecurring(RecurringAction.Accept,data)),
+                    InlineKeyboardButton.WithCallbackData("❌ Not what I wanted", GetCallbackData(CallbackType.RecurringTask, ActionType.Dismiss)),
+                    InlineKeyboardButton.WithCallbackData("✔ Schedule this task", GetCallbackData(CallbackType.RecurringTask, ActionType.Accept))
                 }
             });
 
-        private InlineKeyboardMarkup RecurringMessageDefaultKeyboard(string taskId)
+        private InlineKeyboardMarkup RecurringMessageDefaultKeyboard(int taskId)
             => new InlineKeyboardMarkup(new[]
             {
                 new []
                 {
-                    InlineKeyboardButton.WithCallbackData("✏ Edit ", InlineDataFormatter.FormatRecurring(RecurringAction.Edit,taskId)),
-                    InlineKeyboardButton.WithCallbackData("🚮 Delete ", InlineDataFormatter.FormatRecurring(RecurringAction.Delete,taskId))
+                    InlineKeyboardButton.WithCallbackData("✏ Edit ", GetCallbackData(CallbackType.RecurringTask, ActionType.Edit, taskId)),
+                    InlineKeyboardButton.WithCallbackData("🚮 Delete ", GetCallbackData(CallbackType.RecurringTask, ActionType.Delete, taskId))
                 }
             });
 
@@ -384,85 +384,82 @@ namespace HouseholdTaskPlanner.TelegramBot
         {
             try
             {
-                string inlineData = callbackQueryEventArgs.CallbackQuery.Data;
+                var callbackData = JsonConvert.DeserializeObject<CallbackData>(callbackQueryEventArgs.CallbackQuery.Data);
 
                 var chatId = callbackQueryEventArgs.CallbackQuery.Message.Chat;
                 var oldMessage = callbackQueryEventArgs.CallbackQuery.Message;
 
-                switch (InlineDataFormatter.GetPrefix(inlineData))
+                switch (callbackData.CallbackType)
                 {
-                    case InlineDataFormatter.Prefixes.Recurring:
+                    case CallbackType.RecurringTask:
                         {
-                            // delete or edit
-                            var (action, taskId) = InlineDataFormatter.ParseRecurring(inlineData);
-                            switch (action)
+                            switch (callbackData.ActionType)
                             {
-                                case RecurringAction.Accept:
+                                case ActionType.Accept:
                                     {
-                                        string[] content = oldMessage.Text.Split('-');
-                                        string title = content[0], days = content[1], description = content[2];
+                                        var data = DeserializeHumanReadable(oldMessage.Text);
+
                                         await _recurringTaskRepository.Insert(new Common.Db.Models.RecurringTask
                                         {
-                                            Name = title,
-                                            Description = description,
-                                            IntervalDays = Convert.ToInt32(days)
+                                            IntervalDays = int.Parse(data[0]),
+                                            Name = data[1],
+                                            Description = data[2]
                                         });
                                         break;
                                     }
-                                case RecurringAction.Dismiss:
+                                case ActionType.Dismiss:
                                     {
                                         await _bot.DeleteMessageAsync(oldMessage.Chat, oldMessage.MessageId);
                                         break;
                                     }
-                                case RecurringAction.Edit:
+                                case ActionType.Edit:
                                     {
                                         await SendNotSupportedMessage(oldMessage.Chat);
                                         break;
                                     }
-                                case RecurringAction.Delete:
+                                case ActionType.Delete:
                                     {
-                                        await _recurringTaskRepository.Delete(taskId.Value);
+                                        await _recurringTaskRepository.Delete(callbackData.Id.Value);
                                         await _bot.DeleteMessageAsync(oldMessage.Chat, oldMessage.MessageId);
                                         break;
                                     }
                                 default:
-                                    { break; }
+                                    {
+                                        await SendNotSupportedMessage(chatId);
+                                        break;
+                                    }
                             }
                             break;
                         }
-                    case InlineDataFormatter.Prefixes.Scheduled:
+                    case CallbackType.ScheduledTask:
                         {
-                            var (action, taskId) = InlineDataFormatter.ParseScheduled(inlineData);
-
-                            switch (action)
+                            switch (callbackData.ActionType)
                             {
-                                case ScheduledAction.Accept:
+                                case ActionType.Accept:
                                     {
-                                        string[] content = oldMessage.Text.Split('\n');
-                                        string[] titleContents = content[0].Split('|');
-                                        string title = titleContents[0],
-                                               days = Convert.ToInt32(titleContents[1].Split(new char[] { ' ' }, options: StringSplitOptions.RemoveEmptyEntries)[1]).ToString();
+                                        var data = DeserializeHumanReadable(oldMessage.Text);
+
                                         await _scheduledRepository.Insert(new Common.Db.Models.ScheduledTaskViewModel
                                         {
-                                            Name = title,
-                                            Date = DateTime.Today.AddDays(Convert.ToInt32(days)),
+                                            Date = DateTime.Today.AddDays(int.Parse(data[0])),
+                                            Name = data[1],
                                             Description = string.Empty
                                         });
                                         await _bot.EditMessageTextAsync(oldMessage.Chat, oldMessage.MessageId, text: oldMessage.Text, replyMarkup: default);
                                         break;
                                     }
-                                case ScheduledAction.Dismiss:
+                                case ActionType.Dismiss:
                                     {
                                         await _bot.DeleteMessageAsync(oldMessage.Chat, oldMessage.MessageId);
                                         break;
                                     }
-                                case ScheduledAction.Delete:
+                                case ActionType.Delete:
                                     {
                                         await _bot.DeleteMessageAsync(oldMessage.Chat, oldMessage.MessageId);
-                                        await _scheduledRepository.Delete(taskId.Value);
+                                        await _scheduledRepository.Delete(callbackData.Id.Value);
                                         break;
                                     }
-                                case ScheduledAction.Assign:
+                                case ActionType.Assign:
                                     {
                                         var users = await _userRepository.GetAll();
                                         var telegramId = callbackQueryEventArgs.CallbackQuery.From.Id;
@@ -473,28 +470,33 @@ namespace HouseholdTaskPlanner.TelegramBot
                                             await SendUnknownUserMessage(chatId);
                                             break;
                                         }
+                                        var taskId = callbackData.Id.Value;
 
-                                        await _scheduledRepository.SetAssignedUser(taskId.Value, user.Id);
+                                        await _scheduledRepository.SetAssignedUser(taskId, user.Id);
                                         await this.SendKeyboard(oldMessage,
-                                                                await GetMessageTextForScheduledMessage(taskId.Value),
-                                                                ScheduledMessageAssignedKeyboard(taskId.ToString()),
+                                                                await GetMessageTextForScheduledMessage(taskId),
+                                                                ScheduledMessageAssignedKeyboard(taskId),
                                                                 true);
                                         break;
                                     }
-                                case ScheduledAction.Unassign:
+                                case ActionType.Unassign:
                                     {
-                                        await _scheduledRepository.SetAssignedUser(taskId.Value, -1);
+                                        var taskId = callbackData.Id.Value;
+
+                                        await _scheduledRepository.SetAssignedUser(taskId, -1);
                                         await this.SendKeyboard(oldMessage,
-                                                                await GetMessageTextForScheduledMessage(taskId.Value),
-                                                                ScheduledMessageDefaultKeyboard(taskId.ToString()),
+                                                                await GetMessageTextForScheduledMessage(taskId),
+                                                                ScheduledMessageDefaultKeyboard(taskId),
                                                                 true);
                                         break;
                                     }
-                                case ScheduledAction.Done:
+                                case ActionType.Done:
                                     {
-                                        await _scheduledRepository.SetDone(taskId.Value);
+                                        var taskId = callbackData.Id.Value;
+
+                                        await _scheduledRepository.SetDone(taskId);
                                         await this.SendKeyboard(oldMessage,
-                                                                await GetMessageTextForScheduledMessage(taskId.Value),
+                                                                await GetMessageTextForScheduledMessage(taskId),
                                                                 Emptykeyboard(),
                                                                 true);
                                         break;
@@ -515,6 +517,38 @@ namespace HouseholdTaskPlanner.TelegramBot
             {
                 await _bot.SendTextMessageAsync(callbackQueryEventArgs.CallbackQuery.Message.Chat, e.ToString());
             }
+        }
+
+        private string GetMessageCommand(string messageString)
+        {
+            return messageString.Split(' ')[0].Split('@')[0];
+        }
+
+        private string GetMessageContent(string messageString)
+        {
+            var splitMessage = messageString.Split(' ');
+            return splitMessage.Length <= 1 ? string.Empty : string.Join(" ", splitMessage.Skip(1));
+        }
+
+        private string SerializeHumanReadable(IList<string> strings)
+        {
+            return string.Join(" | ", strings.Select(x => x.Replace("|", string.Empty)));
+        }
+
+        private IList<string> DeserializeHumanReadable(string str)
+        {
+            return str.Split(new string[] { " | " }, StringSplitOptions.None);
+        }
+
+        private string GetCallbackData(CallbackType callbackType, ActionType actionType, int? id = default)
+        {
+            var callbackData = new CallbackData
+            {
+                CallbackType = callbackType,
+                ActionType = actionType,
+                Id = id
+            };
+            return JsonConvert.SerializeObject(callbackData);
         }
 
         private void BotOnReceiveError(object sender, ReceiveErrorEventArgs receiveErrorEventArgs)
