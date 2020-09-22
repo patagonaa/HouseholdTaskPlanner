@@ -8,7 +8,7 @@ namespace HouseholdTaskPlanner.TelegramBot.Repositories
     {
         Task<ScheduledTaskViewModel> Get(int id);
 
-        Task<IList<ScheduledTaskViewModel>> GetList();
+        Task<IList<ScheduledTaskViewModel>> GetTodoList();
         Task SetAssignedUser(int id, int? userId);
         Task SetDone(int id);
         Task Delete(int id);

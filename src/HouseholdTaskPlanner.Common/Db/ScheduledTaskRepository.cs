@@ -40,7 +40,7 @@ namespace HouseholdTaskPlanner.Common.Db
             }
         }
 
-        public async Task<IList<ScheduledTaskViewModel>> GetList()
+        public async Task<IList<ScheduledTaskViewModel>> GetAll()
         {
             using (var connection = GetConnection())
             {
@@ -48,18 +48,17 @@ namespace HouseholdTaskPlanner.Common.Db
 SELECT
     ScheduledTask.Id,
     ScheduledTask.Date,
+    ScheduledTask.State,
     ISNULL(RecurringTask.Name, ScheduledTask.Name) AS Name,
     RecurringTask.Description,
     AssignedUser.Id AS AssignedUser
 FROM ScheduledTask
 LEFT JOIN [RecurringTask] ON RecurringTask.Id = ScheduledTask.RecurringTaskId
 LEFT JOIN [User] AS AssignedUser ON AssignedUser.Id = ScheduledTask.AssignedUserId
-WHERE
-    ScheduledTask.State = @State
 ORDER BY
     ScheduledTask.Date ASC
 ";
-                return (await connection.QueryAsync<ScheduledTaskViewModel>(query, new { State = (int)ScheduledTaskState.Todo })).ToList();
+                return (await connection.QueryAsync<ScheduledTaskViewModel>(query)).ToList();
             }
         }
 

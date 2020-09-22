@@ -1,7 +1,6 @@
 ﻿using HouseholdTaskPlanner.Common.Db.Models;
 using Refit;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace HouseholdTaskPlanner.TelegramBot.Repositories
@@ -14,10 +13,11 @@ namespace HouseholdTaskPlanner.TelegramBot.Repositories
             _api = RestService.For<IScheduledTaskRestApi>(httpClientFactory.Get());
         }
 
-        public async Task<ScheduledTaskViewModel> Get(int id)
-            => (await _api.GetList()).FirstOrDefault(task => task.Id == id);
-        public Task<IList<ScheduledTaskViewModel>> GetList()
-            => _api.GetList();
+        public Task<ScheduledTaskViewModel> Get(int id)
+            => _api.Get(id);
+
+        public Task<IList<ScheduledTaskViewModel>> GetTodoList()
+            => _api.GetTodoList();
 
         public Task Insert(ScheduledTaskViewModel model)
             => _api.Insert(model);

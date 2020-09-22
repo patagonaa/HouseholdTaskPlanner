@@ -2,6 +2,7 @@
 using HouseholdTaskPlanner.Common.Db.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace HouseholdTaskPlanner.Web.Controllers
@@ -19,10 +20,25 @@ namespace HouseholdTaskPlanner.Web.Controllers
             _scheduledTaskService = scheduledTaskService;
         }
 
-        [HttpGet]
-        public async Task<IList<ScheduledTaskViewModel>> GetList()
+        [HttpGet("Todo")]
+        public async Task<IList<ScheduledTaskViewModel>> GetTodoList()
         {
-            return await _scheduledTaskRepository.GetList();
+            return (await _scheduledTaskRepository.GetAll())
+                .Where(x => x.State == ScheduledTaskState.Todo)
+                .ToList();
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<ScheduledTaskViewModel>> Get([FromRoute] int id)
+        {
+            var viewModel = (await _scheduledTaskRepository.GetAll())
+                .SingleOrDefault(x => x.Id == id);
+
+            if (viewModel == null)
+            {
+                return NotFound();
+            }
+            return viewModel;
         }
 
         [HttpPost()]

@@ -177,7 +177,7 @@ namespace HouseholdTaskPlanner.TelegramBot
         private async Task ListUpcomingTasks(Message message, TimeSpan? lookahead = default)
         {
             var today = DateTime.Today;
-            var scheduledTasks = (await _scheduledRepository.GetList())
+            var scheduledTasks = (await _scheduledRepository.GetTodoList())
                     .Where(task => task.Date >= today).ToList();
 
             if (lookahead.HasValue)

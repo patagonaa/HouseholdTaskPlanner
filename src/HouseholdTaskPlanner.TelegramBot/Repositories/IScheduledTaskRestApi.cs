@@ -7,8 +7,11 @@ namespace HouseholdTaskPlanner.TelegramBot.Repositories
 {
     public interface IScheduledTaskRestApi
     {
-        [Get("/ScheduledTask")]
-        Task<IList<ScheduledTaskViewModel>> GetList();
+        [Get("/ScheduledTask/{id}")]
+        Task<ScheduledTaskViewModel> Get(int id);
+
+        [Get("/ScheduledTask/Todo")]
+        Task<IList<ScheduledTaskViewModel>> GetTodoList();
 
         [Post("/ScheduledTask/{id}/SetAssignedUser/{userId}")]
         Task SetAssignedUser(int id, int? userId);

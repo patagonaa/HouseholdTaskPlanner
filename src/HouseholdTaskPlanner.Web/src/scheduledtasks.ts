@@ -19,7 +19,7 @@ class AppViewModel {
     }
 
     async loadList() {
-        let result = await fetch('api/ScheduledTask/');
+        let result = await fetch('api/ScheduledTask/Todo');
         this.scheduledTasks((<any[]>await result.json()).map(x => new ScheduledTaskViewModel(this, x)));
     }
 }
