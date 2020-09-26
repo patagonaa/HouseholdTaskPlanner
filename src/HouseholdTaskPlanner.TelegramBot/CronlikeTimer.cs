@@ -22,7 +22,7 @@ namespace HouseholdTaskPlanner.TelegramBot
             var nextOccurance = _cronExpression.GetNextOccurrence(DateTime.UtcNow);
             if (nextOccurance.HasValue)
             {
-                _timer.Change(nextOccurance.Value-DateTime.UtcNow, TimeSpan.FromMilliseconds(-1));
+                _timer.Change(nextOccurance.Value - DateTime.Now, TimeSpan.FromMilliseconds(-1));
             }
         }
 
