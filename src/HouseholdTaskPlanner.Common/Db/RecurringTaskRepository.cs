@@ -86,7 +86,7 @@ WHERE
     RecurringTask.Id = @Id AND
     ScheduledTask.State <> @TodoState";
 
-                await connection.ExecuteAsync(nameUpdateSql, new { Id = id, State = (int)ScheduledTaskState.Todo });
+                await connection.ExecuteAsync(nameUpdateSql, new { Id = id, TodoState = (int)ScheduledTaskState.Todo });
 
                 var deleteSql = @"DELETE FROM RecurringTask WHERE Id = @Id";
 
