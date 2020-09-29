@@ -177,8 +177,7 @@ namespace HouseholdTaskPlanner.TelegramBot
         private async Task ListUpcomingTasks(Message message, TimeSpan? lookahead = default)
         {
             var today = DateTime.Today;
-            var scheduledTasks = (await _scheduledRepository.GetTodoList())
-                    .Where(task => task.Date >= today).ToList();
+            var scheduledTasks = await _scheduledRepository.GetTodoList();
 
             if (lookahead.HasValue)
             {
@@ -199,7 +198,7 @@ namespace HouseholdTaskPlanner.TelegramBot
                 var assignedUser = assignedUserId.HasValue ? users.SingleOrDefault(user => user.Id == assignedUserId.GetValueOrDefault(-1)) : null;
 
                 string messageText = string.Join(Environment.NewLine,
-                                    $"{((lookahead ?? TimeSpan.MaxValue) > TimeSpan.FromDays(1) ? (task.Date.ToString("dddd yyyy-MM-dd", CultureInfo.InvariantCulture) + " | ") : string.Empty)}{task.Name} | {(assignedUser != null ? $"Assigned to @{assignedUser.TelegramUsername}" : "Not Assigned")}",
+                                    $"{(task.Date != today ? (task.Date.ToString("dddd yyyy-MM-dd", CultureInfo.InvariantCulture) + " | ") : string.Empty)}{task.Name} | {(assignedUser != null ? $"Assigned to @{assignedUser.TelegramUsername}" : "Not Assigned")}",
                                     string.Empty,
                                     task.Description);
                 if (assignedUser == null)
@@ -259,7 +258,7 @@ namespace HouseholdTaskPlanner.TelegramBot
             var contentLines = GetMessageContent(message.Text).Split('\n');
 
             string daysStr = contentLines.Length >= 2 ? contentLines[0] : string.Empty;
-            bool canParseDays = int.TryParse(daysStr, out int parsedDays);
+            bool canParseDays = int.TryParse(daysStr, out _);
 
             if (contentLines.Length < 2 || !canParseDays)
             {
@@ -284,7 +283,7 @@ namespace HouseholdTaskPlanner.TelegramBot
         {
             var contentLines = GetMessageContent(message.Text).Split('\n');
             string daysStr = contentLines.Length >= 2 ? contentLines[0] : string.Empty;
-            bool canParseDays = int.TryParse(daysStr, out int parsedDays);
+            bool canParseDays = int.TryParse(daysStr, out _);
 
             if (contentLines.Length != 2 || !canParseDays)
             {

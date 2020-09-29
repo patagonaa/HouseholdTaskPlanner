@@ -70,6 +70,7 @@ namespace HouseholdTaskPlanner.Web.Controllers
             {
                 return NotFound();
             }
+            await _scheduledTaskService.InitializeRecurringTasks();
             return Ok();
         }
     }
