@@ -4,7 +4,7 @@ services:
     image: household-planner-web
     build:
       context: .
-      dockerfile: Dockerfile.web
+      dockerfile: src/TaskPlanner/TaskPlanner.Web/Dockerfile
     environment:
       - "ConnectionString=Server=db,1433;Database=BeatSaverMatcher;User Id=sa;Password=!1Start1!;"
     restart: unless-stopped
@@ -12,7 +12,7 @@ services:
     image: household-planner-bot
     build:
       context: .
-      dockerfile: Dockerfile.bot
+      dockerfile: src/TaskPlanner/TaskPlanner.TelegramBot.Cli/Dockerfile
     environment:
       - "BotToken="
       - "ScheduleChat=-123456789"
