@@ -19,6 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\User\User.Common\User.Common.csproj" />
       <ProjectReference Include="..\TaskPlanner.Common\TaskPlanner.Common.csproj" />
     </ItemGroup>
 
