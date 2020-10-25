@@ -8,26 +8,23 @@ namespace HouseholdPlanner.Common
 {
     public abstract class ApiRemoteRepository<TApi>
     {
-        private readonly IApiConfiguration _apiConfiguration;
-
         public TApi Api { get; }
 
         public ApiRemoteRepository(IApiConfiguration apiConfiguration)
         {
-            Api = RestService.For<TApi>(GetHttpClient());
-            _apiConfiguration = apiConfiguration;
+            Api = RestService.For<TApi>(GetHttpClient(apiConfiguration));
         }
 
-        private HttpClient GetHttpClient()
+        private HttpClient GetHttpClient(IApiConfiguration apiConfiguration)
         {
             var httpClient = new HttpClient
             {
-                BaseAddress = new Uri(_apiConfiguration.BackendLocation),
+                BaseAddress = new Uri(apiConfiguration.BackendLocation),
             };
 
-            if (!string.IsNullOrWhiteSpace(_apiConfiguration.BasicAuth))
+            if (!string.IsNullOrWhiteSpace(apiConfiguration.BasicAuth))
             {
-                var authToken = Encoding.UTF8.GetBytes(_apiConfiguration.BasicAuth);
+                var authToken = Encoding.UTF8.GetBytes(apiConfiguration.BasicAuth);
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(authToken));
             }
 
