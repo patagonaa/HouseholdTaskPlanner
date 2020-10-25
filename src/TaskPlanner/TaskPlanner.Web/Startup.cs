@@ -1,9 +1,9 @@
-using TaskPlanner.Common.Db;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using TaskPlanner.Web.Db;
 
 namespace TaskPlanner.Web
 {
@@ -22,10 +22,9 @@ namespace TaskPlanner.Web
         {
             services.AddSingleton<IRecurringTaskRepository, RecurringTaskRepository>();
             services.AddSingleton<IScheduledTaskRepository, ScheduledTaskRepository>();
-            services.AddSingleton<IUserRepository, UserRepository>();
             services.AddSingleton<ScheduledTaskService>();
 
-            services.Configure<DbConfiguration>(Configuration);
+            services.Configure<TaskPlannerDbConfiguration>(Configuration);
 
             services.AddHostedService<RecurringTaskScheduleInitializer>();
 
@@ -48,7 +47,7 @@ namespace TaskPlanner.Web
 
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "HousholdTaskPlanner");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "TaskPlanner");
             });
 
             app.UseRouting();

@@ -1,7 +1,7 @@
-﻿using TaskPlanner.Common.Db;
-using TaskPlanner.Common.Db.Models;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using TaskPlanner.Common.Models;
+using TaskPlanner.Web.Db;
 
 namespace TaskPlanner.Web
 {

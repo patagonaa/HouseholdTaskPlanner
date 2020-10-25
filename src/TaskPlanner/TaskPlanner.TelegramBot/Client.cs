@@ -1,5 +1,4 @@
-﻿using TaskPlanner.TelegramBot.Repositories;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
@@ -12,6 +11,9 @@ using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using User.Common.Api;
+using TaskPlanner.Common.Models;
+using TaskPlanner.Common.Api;
 
 namespace TaskPlanner.TelegramBot
 {
@@ -398,7 +400,7 @@ namespace TaskPlanner.TelegramBot
                                     {
                                         var data = DeserializeHumanReadable(oldMessage.Text);
 
-                                        await _recurringTaskRepository.Insert(new Common.Db.Models.RecurringTask
+                                        await _recurringTaskRepository.Insert(new RecurringTask
                                         {
                                             IntervalDays = int.Parse(data[0]),
                                             Name = data[1],
@@ -438,7 +440,7 @@ namespace TaskPlanner.TelegramBot
                                     {
                                         var data = DeserializeHumanReadable(oldMessage.Text);
 
-                                        await _scheduledRepository.Insert(new Common.Db.Models.ScheduledTaskViewModel
+                                        await _scheduledRepository.Insert(new ScheduledTaskViewModel
                                         {
                                             Date = DateTime.Today.AddDays(int.Parse(data[0])),
                                             Name = data[1],

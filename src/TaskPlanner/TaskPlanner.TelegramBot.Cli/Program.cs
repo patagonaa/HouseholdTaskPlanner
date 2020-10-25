@@ -1,10 +1,11 @@
-﻿using TaskPlanner.TelegramBot.Repositories;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using System.Threading.Tasks;
+using TaskPlanner.Common.Api;
+using User.Common.Api;
 
 namespace TaskPlanner.TelegramBot.Cli
 {
@@ -33,13 +34,13 @@ namespace TaskPlanner.TelegramBot.Cli
         private static void ConfigureServices(HostBuilderContext ctx, IServiceCollection services)
         {
             services.Configure<BotConfiguration>(ctx.Configuration);
-            services.Configure<ApiConfiguration>(ctx.Configuration);
+            services.Configure<TaskApiConfiguration>(ctx.Configuration.GetSection("TaskApi"));
+            services.Configure<UserApiConfiguration>(ctx.Configuration.GetSection("UserApi"));
 
             services.AddSingleton<Client>();
             services.AddSingleton<IUserRemoteRepository, UserRemoteRepository>();
             services.AddSingleton<IRecurringTaskRemoteRepository, RecurringTaskRemoteRepository>();
             services.AddSingleton<IScheduledTaskRemoteRepository, ScheduledTaskRemoteRepository>();
-            services.AddSingleton<TaskplannerApiHttpClientFactory>();
 
             services.AddHostedService<BotService>();
         }

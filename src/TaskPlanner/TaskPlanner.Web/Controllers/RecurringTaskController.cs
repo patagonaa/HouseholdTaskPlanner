@@ -1,8 +1,8 @@
-﻿using TaskPlanner.Common.Db;
-using TaskPlanner.Common.Db.Models;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TaskPlanner.Common.Models;
+using TaskPlanner.Web.Db;
 
 namespace TaskPlanner.Web.Controllers
 {

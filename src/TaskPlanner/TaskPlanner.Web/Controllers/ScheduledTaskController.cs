@@ -1,9 +1,9 @@
-﻿using TaskPlanner.Common.Db;
-using TaskPlanner.Common.Db.Models;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TaskPlanner.Common.Models;
+using TaskPlanner.Web.Db;
 
 namespace TaskPlanner.Web.Controllers
 {
@@ -47,7 +47,7 @@ namespace TaskPlanner.Web.Controllers
             {
                 Date = model.Date,
                 Name = model.Name,
-                State = ScheduledTaskState.Todo,
+                State = model.State == ScheduledTaskState.None ? ScheduledTaskState.Todo : model.State,
                 RecurringTaskId = default
             });
 
