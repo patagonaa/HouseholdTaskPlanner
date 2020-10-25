@@ -26,7 +26,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseholdPlanner.Common", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03_User", "03_User", "{D68F0742-9ED2-4F30-9569-27726D3317A4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "User.Web", "User\HouseholdPlanner.User\User.Web.csproj", "{05C62393-ACDD-4812-89BB-2369E06F0E10}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "User.Web", "User\User.Web\User.Web.csproj", "{05C62393-ACDD-4812-89BB-2369E06F0E10}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "User.Common", "User\User.Common\User.Common.csproj", "{DF0BAA61-3105-49EB-82F0-ABB91DD03BFD}"
 EndProject

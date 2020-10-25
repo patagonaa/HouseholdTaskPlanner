@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using TaskPlanner.Web.Db;
+using User.Common.Api;
 
 namespace TaskPlanner.Web
 {
@@ -25,6 +26,9 @@ namespace TaskPlanner.Web
             services.AddSingleton<ScheduledTaskService>();
 
             services.Configure<TaskPlannerDbConfiguration>(Configuration);
+
+            services.Configure<UserApiConfiguration>(Configuration.GetSection("UserApi"));
+            services.AddSingleton<IUserRemoteRepository, UserRemoteRepository>();
 
             services.AddHostedService<RecurringTaskScheduleInitializer>();
 

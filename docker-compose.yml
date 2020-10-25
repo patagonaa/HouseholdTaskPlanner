@@ -1,15 +1,18 @@
 version: "3.7"
 services:
-  web:
-    image: household-planner-web
+  task-web:
+    image: household-task-web
     build:
       context: .
       dockerfile: src/TaskPlanner/TaskPlanner.Web/Dockerfile
     environment:
       - "ConnectionString=Server=db,1433;Database=BeatSaverMatcher;User Id=sa;Password=!1Start1!;"
+      - "UserApi__BackendLocation=http://user-web/api"
+      - "UserApi__BasicAuth=user:pass"
     restart: unless-stopped
-  bot:
-    image: household-planner-bot
+
+  task-bot:
+    image: household-task-bot
     build:
       context: .
       dockerfile: src/TaskPlanner/TaskPlanner.TelegramBot.Cli/Dockerfile
@@ -17,8 +20,19 @@ services:
       - "BotToken="
       - "ScheduleChat=-123456789"
       - "AllowedChats__0=-123456789"
-      - "BackendLocation=http://web/api"
-      - "BasicAuth=user:pass"
+      - "TaskApi__BackendLocation=http://task-web/api"
+      - "TaskApi__BasicAuth=user:pass"
+      - "UserApi__BackendLocation=http://user-web/api"
+      - "UserApi__BasicAuth=user:pass"
+    restart: unless-stopped
+
+  user-web:
+    image: household-user-web
+    build:
+      context: .
+      dockerfile: src/User/User.Web/Dockerfile
+    environment:
+      - "ConnectionString=Server=db,1433;Database=BeatSaverMatcher;User Id=sa;Password=!1Start1!;"
     restart: unless-stopped
 
   db:
