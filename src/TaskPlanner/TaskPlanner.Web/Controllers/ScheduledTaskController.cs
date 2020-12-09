@@ -41,7 +41,7 @@ namespace TaskPlanner.Web.Controllers
             return viewModel;
         }
 
-        [HttpPost()]
+        [HttpPut()]
         public Task Create([FromBody] ScheduledTaskViewModel model)
             => _scheduledTaskRepository.Insert(new ScheduledTask
             {

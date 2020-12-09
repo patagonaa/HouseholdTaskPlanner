@@ -25,7 +25,7 @@ namespace TaskPlanner.Web.Controllers
             return await _recurringTaskRepository.GetAll();
         }
 
-        [HttpPost]
+        [HttpPut]
         public async Task Post([FromBody] RecurringTaskAddModel addModel)
         {
             var newTask = new RecurringTask
@@ -39,7 +39,7 @@ namespace TaskPlanner.Web.Controllers
             await _scheduledTaskService.InitializeRecurringTasks();
         }
 
-        [HttpPut("{id}")]
+        [HttpPost("{id}")]
         public async Task<ActionResult> Put([FromBody] RecurringTask updateModel)
         {
             if (!await _recurringTaskRepository.Update(updateModel))

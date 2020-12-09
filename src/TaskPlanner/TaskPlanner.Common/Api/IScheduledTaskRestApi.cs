@@ -22,7 +22,7 @@ namespace TaskPlanner.Common.Api
         [Delete("/ScheduledTask/{id}")]
         Task Delete(int id);
 
-        [Post("/ScheduledTask")]
+        [Put("/ScheduledTask")]
         Task Insert(ScheduledTaskViewModel model);
     }
 }

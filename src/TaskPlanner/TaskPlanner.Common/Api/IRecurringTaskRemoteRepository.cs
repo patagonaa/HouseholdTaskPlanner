@@ -8,7 +8,7 @@ namespace TaskPlanner.Common.Api
     {
         Task<IList<RecurringTask>> GetAll();
 
-        Task Insert(RecurringTask task);
+        Task Insert(RecurringTaskAddModel task);
 
         Task<bool> Update(RecurringTask task);
 

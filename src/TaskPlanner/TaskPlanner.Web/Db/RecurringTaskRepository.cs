@@ -65,7 +65,7 @@ SELECT
 FROM [dbo].[RecurringTask]
 WHERE
     NOT EXISTS (SELECT ScheduledTask.Id FROM ScheduledTask WHERE ScheduledTask.RecurringTaskId = RecurringTask.Id AND ScheduledTask.State = @State)
-", new { State = (int)ScheduledTaskState.Todo });
+", new { State = ScheduledTaskState.Todo });
                 return results.ToList();
             }
         }

@@ -80,7 +80,7 @@ namespace TaskPlanner.TelegramBot
                 {
                     Chat = new Chat { Id = _configuration.ScheduleChat }
                 },
-                lookahead: TimeSpan.FromDays(1));
+                lookahead: TimeSpan.Zero);
             }
             catch (Exception e)
             {
@@ -400,7 +400,7 @@ namespace TaskPlanner.TelegramBot
                                     {
                                         var data = DeserializeHumanReadable(oldMessage.Text);
 
-                                        await _recurringTaskRepository.Insert(new RecurringTask
+                                        await _recurringTaskRepository.Insert(new RecurringTaskAddModel
                                         {
                                             IntervalDays = int.Parse(data[0]),
                                             Name = data[1],

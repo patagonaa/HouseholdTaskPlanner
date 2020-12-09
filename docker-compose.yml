@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: src/TaskPlanner/TaskPlanner.Web/Dockerfile
     environment:
-      - "ConnectionString=Server=db,1433;Database=BeatSaverMatcher;User Id=sa;Password=!1Start1!;"
+      - "ConnectionString=Server=db,1433;Database=HouseholdTaskPlanner;User Id=sa;Password=!1Start1!;"
       - "UserApi__BackendLocation=http://user-web/api"
       - "UserApi__BasicAuth=user:pass"
     restart: unless-stopped
@@ -32,7 +32,7 @@ services:
       context: .
       dockerfile: src/User/User.Web/Dockerfile
     environment:
-      - "ConnectionString=Server=db,1433;Database=BeatSaverMatcher;User Id=sa;Password=!1Start1!;"
+      - "ConnectionString=Server=db,1433;Database=HouseholdTaskPlanner;User Id=sa;Password=!1Start1!;"
     restart: unless-stopped
 
   db:

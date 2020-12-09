@@ -10,10 +10,10 @@ namespace TaskPlanner.Common.Api
         [Get("/recurringTask")]
         Task<IList<RecurringTask>> GetAll();
 
-        [Post("/recurringTask")]
-        Task Insert(RecurringTask task);
-
         [Put("/recurringTask")]
+        Task Insert(RecurringTaskAddModel task);
+
+        [Post("/recurringTask")]
         Task<bool> Update(RecurringTask task);
 
         [Delete("/recurringTask/{id}")]

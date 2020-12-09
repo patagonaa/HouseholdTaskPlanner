@@ -17,7 +17,7 @@ namespace TaskPlanner.Common.Api
         public Task<IList<RecurringTask>> GetAll()
             => Api.GetAll();
 
-        public Task Insert(RecurringTask task)
+        public Task Insert(RecurringTaskAddModel task)
             => Api.Insert(task);
 
         public Task<bool> Update(RecurringTask task)

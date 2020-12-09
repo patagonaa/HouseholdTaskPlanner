@@ -23,12 +23,12 @@ namespace TaskPlanner.Web.Db
             }
         }
 
-        public async Task DeleteForRecurringTask(int recurringTaskId)
+        public async Task DeleteScheduledForRecurringTask(int recurringTaskId)
         {
             using (var connection = GetConnection())
             {
-                var query = @"DELETE FROM ScheduledTask WHERE RecurringTaskId = @RecurringTaskId";
-                await connection.ExecuteAsync(query, new { RecurringTaskId = recurringTaskId });
+                var query = @"DELETE FROM ScheduledTask WHERE RecurringTaskId = @RecurringTaskId AND State = @State";
+                await connection.ExecuteAsync(query, new { RecurringTaskId = recurringTaskId, State = ScheduledTaskState.Todo });
             }
         }
 
