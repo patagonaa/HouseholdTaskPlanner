@@ -146,7 +146,7 @@ namespace TaskPlanner.TelegramBot
 
                 // list upcoming tasks this week
                 case "/listToday":
-                    await ListUpcomingTasks(message, TimeSpan.FromDays(1));
+                    await ListUpcomingTasks(message, TimeSpan.FromDays(0));
                     break;
 
                 // Send inline keyboard
