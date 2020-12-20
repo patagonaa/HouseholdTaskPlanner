@@ -1,35 +1,51 @@
 ﻿using Cronos;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace TaskPlanner.TelegramBot
 {
     internal class CronlikeTimer
     {
-        private readonly Action _callback;
+        private readonly Func<Task> _callback;
+        private readonly ILogger<CronlikeTimer> _logger;
         private readonly CronExpression _cronExpression;
         private readonly Timer _timer;
 
-        public CronlikeTimer(string pattern, Action callback)
+        public CronlikeTimer(string pattern, Func<Task> callback, ILogger<CronlikeTimer> logger)
         {
             _callback = callback;
+            _logger = logger;
             _cronExpression = CronExpression.Parse(pattern);
             _timer = new Timer(new TimerCallback(Callback));
         }
 
         public void Start()
         {
-            var nextOccurance = _cronExpression.GetNextOccurrence(DateTime.UtcNow);
+            var nextOccurance = _cronExpression.GetNextOccurrence(DateTimeOffset.Now, TimeZoneInfo.Local);
             if (nextOccurance.HasValue)
             {
-                _timer.Change(nextOccurance.Value - DateTime.Now, TimeSpan.FromMilliseconds(-1));
+                TimeSpan timePeriod = nextOccurance.Value - DateTimeOffset.Now;
+                _logger.LogInformation("Scheduled Task in {TimePeriodHours}", timePeriod.TotalHours.ToString("D2"));
+                _timer.Change(timePeriod, TimeSpan.FromMilliseconds(-1));
             }
         }
 
-        private void Callback(object o)
+        private async void Callback(object o)
         {
-            try { _callback?.Invoke(); }
-            catch { }
+            _logger.LogInformation("Running scheduled Task!");
+            try
+            {
+                if(_callback != null)
+                {
+                    await _callback();
+                }
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Error while running Task");
+            }
             Start();
         }
     }

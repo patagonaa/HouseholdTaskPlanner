@@ -25,11 +25,13 @@ namespace TaskPlanner.TelegramBot
         private readonly IUserRemoteRepository _userRepository;
         private readonly IRecurringTaskRemoteRepository _recurringTaskRepository;
         private readonly ILogger<Client> _logger;
+        private readonly ILogger<CronlikeTimer> _cronLogger;
         private CronlikeTimer _dailyScheduler;
         private CronlikeTimer _weeklyScheduler;
 
         public Client(IOptions<BotConfiguration> configuration,
                       ILogger<Client> logger,
+                      ILogger<CronlikeTimer> cronLogger,
                       IUserRemoteRepository userRepository,
                       IRecurringTaskRemoteRepository recurringTaskRepository,
                       IScheduledTaskRemoteRepository scheduledRepository)
@@ -40,6 +42,7 @@ namespace TaskPlanner.TelegramBot
             _userRepository = userRepository;
             _recurringTaskRepository = recurringTaskRepository;
             _logger = logger;
+            _cronLogger = cronLogger;
         }
 
         public async Task Start()
@@ -47,8 +50,8 @@ namespace TaskPlanner.TelegramBot
             var me = await _bot.GetMeAsync();
             Console.Title = me.Username;
 
-            _dailyScheduler = new CronlikeTimer("0 8 * * 1-6", () => SendDailyTasks().Start());
-            _weeklyScheduler = new CronlikeTimer("0 8 * * 7", () => SendWeeklyTasks().Start());
+            _dailyScheduler = new CronlikeTimer("0 9 * * 1-6", () => SendDailyTasks(), _cronLogger);
+            _weeklyScheduler = new CronlikeTimer("0 9 * * 7", () => SendWeeklyTasks(), _cronLogger);
 
             _dailyScheduler.Start();
             _weeklyScheduler.Start();
