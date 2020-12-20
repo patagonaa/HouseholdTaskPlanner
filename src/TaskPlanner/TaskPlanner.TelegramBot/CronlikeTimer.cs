@@ -1,6 +1,7 @@
 ﻿using Cronos;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -27,7 +28,7 @@ namespace TaskPlanner.TelegramBot
             if (nextOccurance.HasValue)
             {
                 TimeSpan timePeriod = nextOccurance.Value - DateTimeOffset.Now;
-                _logger.LogInformation("Scheduled Task in {TimePeriodHours}", timePeriod.TotalHours.ToString("D2"));
+                _logger.LogInformation("Scheduled Task in {TimePeriodHours} hours", timePeriod.TotalHours.ToString("F2", CultureInfo.InvariantCulture));
                 _timer.Change(timePeriod, TimeSpan.FromMilliseconds(-1));
             }
         }
